@@ -12,6 +12,9 @@ import (
 
 func main() {
 	e := echo.New()
+	//very importantts xD // error handling doesnt work the way you thought
+	e.HTTPErrorHandler = httpErrorHandler
+
 	ex := NewExchange()
 
 	e.GET("book/:market", ex.handleGetBook)
@@ -20,6 +23,10 @@ func main() {
 
 	e.Start(":3000")
 	fmt.Println("Hello World")
+}
+
+func httpErrorHandler(err error, c echo.Context) {
+	fmt.Println(err)
 }
 
 type OrderType string
@@ -137,6 +144,12 @@ func (ex *Exchange) cancelOrder(c echo.Context) error {
 	})
 }
 
+type MatchedOrder struct {
+	Price float64
+	Size  float64
+	ID    int64
+}
+
 // Curl test for handlePlaceOrder
 // curl --location --request POST 'localhost:3000/order' \
 // --header 'Content-Type: application/json' \
@@ -168,8 +181,24 @@ func (ex *Exchange) handlePlaceOrder(c echo.Context) error {
 	// place the order
 	if placeOrderData.Type == MarketOrder {
 		matches := ob.PlaceMarketOrder(order)
+		matchedOrders := make([]*MatchedOrder, len(matches))
+
+		for i := 0; i < len(matchedOrders); i++ {
+			id := matches[i].Bid.ID
+
+			if order.Bid {
+				id = matches[i].Ask.ID
+			}
+
+			matchedOrders[i] = &MatchedOrder{
+				ID:    id,
+				Size:  matches[i].SizeFilled,
+				Price: matches[i].Price,
+			}
+		}
+
 		return c.JSON(200, map[string]any{
-			"matches": len(matches),
+			"matches": matchedOrders,
 		})
 	} else {
 		ob.PlaceLimitOrder(placeOrderData.Price, order)
