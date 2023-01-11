@@ -35,6 +35,12 @@ func TestPlaceLimitOrder(t *testing.T) {
 	ob.PlaceLimitOrder(10_000, sellOrderA)
 	ob.PlaceLimitOrder(9_000, sellOrderB)
 
+	// make sure the order map is filled
+	assert(t, len(ob.Orders), 2)
+	// make sure the order has the right sellorder object in the map
+	assert(t, ob.Orders[sellOrderA.ID], sellOrderA)
+	assert(t, ob.Orders[sellOrderB.ID], sellOrderB)
+
 	assert(t, len(ob.asks), 2)
 }
 
@@ -91,4 +97,8 @@ func TestCancelOrder(t *testing.T) {
 	ob.CancelOrder(buyOrder)
 
 	assert(t, ob.BidTotalVolume(), 0.0)
+
+	// make sure the orders map is cleared
+	_, ok := ob.Orders[buyOrder.ID]
+	assert(t, ok, false)
 }

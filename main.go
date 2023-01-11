@@ -122,44 +122,19 @@ func (ex *Exchange) handleGetBook(c echo.Context) error {
 
 // HOMEWORK ( make this better \TIME TO SHINE\)
 func (ex *Exchange) cancelOrder(c echo.Context) error {
-	idStr := c.Param("id")
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.Atoi(c.Param("id"))
 
-	// unhardcode the market TODO
+	// Get order book
 	ob := ex.orderbooks[MarketETH]
-	orderCanceled := false
 
-	for _, limit := range ob.Asks() {
-		for _, order := range limit.Orders {
-			if order.ID == int64(id) {
-				ob.CancelOrder(order)
-				orderCanceled = true
-			}
+	// Get order
+	order := ob.Orders[int64(id)]
 
-			if orderCanceled {
-				return c.JSON(200, map[string]any{
-					"msg": "Order Canceled Succesfully",
-				})
-			}
-		}
-	}
+	ob.CancelOrder(order)
 
-	for _, limit := range ob.Bids() {
-		for _, order := range limit.Orders {
-			if order.ID == int64(id) {
-				ob.CancelOrder(order)
-				orderCanceled = true
-			}
-
-			if orderCanceled {
-				return c.JSON(200, map[string]any{
-					"msg": "Order Canceled Succesfully",
-				})
-			}
-		}
-	}
-
-	return nil
+	return c.JSON(200, map[string]any{
+		"msg": "order deleted",
+	})
 }
 
 // Curl test for handlePlaceOrder
